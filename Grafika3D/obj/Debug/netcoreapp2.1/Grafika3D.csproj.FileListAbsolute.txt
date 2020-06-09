@@ -1,0 +1,11 @@
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\bin\Debug\netcoreapp2.1\Grafika3D.deps.json
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\bin\Debug\netcoreapp2.1\Grafika3D.runtimeconfig.json
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\bin\Debug\netcoreapp2.1\Grafika3D.runtimeconfig.dev.json
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\bin\Debug\netcoreapp2.1\Grafika3D.dll
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\obj\Debug\netcoreapp2.1\Grafika3D.csprojAssemblyReference.cache
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\obj\Debug\netcoreapp2.1\Grafika3D.csproj.CoreCompileInputs.cache
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\obj\Debug\netcoreapp2.1\Grafika3D.AssemblyInfoInputs.cache
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\obj\Debug\netcoreapp2.1\Grafika3D.AssemblyInfo.cs
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\bin\Debug\netcoreapp2.1\Grafika3D.pdb
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\obj\Debug\netcoreapp2.1\Grafika3D.dll
+C:\Users\Mateusz\source\repos\Grafika3D\Grafika3D\obj\Debug\netcoreapp2.1\Grafika3D.pdb
