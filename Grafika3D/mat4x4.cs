@@ -9,7 +9,7 @@ namespace Grafika3D
     {
         public float[,] m = new float[4, 4];
 
-        public Vector3f MultiplyVecMatr(Vector3f i, mat4x4 m)
+        public static Vector3f MultiplyVecMatr(Vector3f i, mat4x4 m)
         {
             Vector3f o = new Vector3f();
             o.X = i.X * m.m[0, 0] + i.Y * m.m[1, 0] + i.Z * m.m[2, 0] + m.m[3, 0];
