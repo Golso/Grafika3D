@@ -21,74 +21,6 @@ namespace Grafika3D
             window.Close();
         }
 
-        static Triangle XRotation(float fTheta, Triangle tri)
-        {
-            mat4x4 matRotX = new mat4x4();
-
-            // Rotation X
-            matRotX.m[0, 0] = 1;
-            matRotX.m[1, 1] = (float)Math.Cos(fTheta * 0.5f);
-            matRotX.m[1, 2] = (float)Math.Sin(fTheta * 0.5f);
-            matRotX.m[2, 1] = (float)(-Math.Sin(fTheta * 0.5f));
-            matRotX.m[2, 2] = (float)Math.Cos(fTheta * 0.5f);
-            matRotX.m[3, 3] = 1;
-
-            Triangle wynik = tri;
-            wynik.v0 = mat4x4.MultiplyVecMatr(tri.v0, matRotX);
-            wynik.v1 = mat4x4.MultiplyVecMatr(tri.v1, matRotX);
-            wynik.v2 = mat4x4.MultiplyVecMatr(tri.v2, matRotX);
-
-            return wynik;
-        }
-
-        static Triangle YRotation(float fTheta, Triangle tri)
-        {
-            mat4x4 matRotY = new mat4x4();
-            // Rotation Z
-            matRotY.m[0, 0] = (float)Math.Cos(fTheta);
-            matRotY.m[0, 2] = (float)(-Math.Sin(fTheta));
-            matRotY.m[2, 0] = (float)(Math.Sin(fTheta));
-            matRotY.m[1, 1] = 1;
-            matRotY.m[2, 2] = (float)Math.Cos(fTheta);
-            matRotY.m[3, 3] = 1;
-
-            Triangle wynik = tri;
-            wynik.v0 = mat4x4.MultiplyVecMatr(tri.v0, matRotY);
-            wynik.v1 = mat4x4.MultiplyVecMatr(tri.v1, matRotY);
-            wynik.v2 = mat4x4.MultiplyVecMatr(tri.v2, matRotY);
-
-            return wynik;
-        }
-
-        static Triangle ZRotation(float fTheta, Triangle tri)
-        {
-            mat4x4 matRotZ = new mat4x4();
-            // Rotation Z
-            matRotZ.m[0, 0] = (float)Math.Cos(fTheta);
-            matRotZ.m[0, 1] = (float)Math.Sin(fTheta);
-            matRotZ.m[1, 0] = (float)(-Math.Sin(fTheta));
-            matRotZ.m[1, 1] = (float)Math.Cos(fTheta);
-            matRotZ.m[2, 2] = 1;
-            matRotZ.m[3, 3] = 1;
-
-            Triangle wynik = tri;
-            wynik.v0 = mat4x4.MultiplyVecMatr(tri.v0, matRotZ);
-            wynik.v1 = mat4x4.MultiplyVecMatr(tri.v1, matRotZ);
-            wynik.v2 = mat4x4.MultiplyVecMatr(tri.v2, matRotZ);
-
-            return wynik;
-        }
-
-        static Triangle Zooming(float d, Triangle tri)
-        {
-            Triangle wynik = tri;
-            wynik.v0.Z = wynik.v0.Z + d;
-            wynik.v1.Z = wynik.v1.Z + d;
-            wynik.v2.Z = wynik.v2.Z + d;
-
-            return wynik;
-        }
-
         static float d = 5.0f;
         static float XTheta = 0;
         static float YTheta = 0;
@@ -149,13 +81,7 @@ namespace Grafika3D
             
 
             mat4x4 matProj = new mat4x4();
-
-            matProj.m[0,0] = fAspectRatio * fFovRad;
-            matProj.m[1,1] = fFovRad;
-            matProj.m[2,2] = fFar / (fFar - fNear);
-            matProj.m[3,2] = (-fFar * fNear) / (fFar - fNear);
-            matProj.m[2,3] = 1.0f;
-            matProj.m[3,3] = 0.0f;
+            matProj.Matrix_MakeProjection(fFov, fAspectRatio, fNear, fFar);
 
             //making triangle throught drawing lines
             VertexArray trojkat(Triangle troj)
@@ -199,16 +125,16 @@ namespace Grafika3D
                     Triangle triProjected, triTranslated, triRotatedZ, triRotatedX, triRotatedY;
 
                     //Rotate in Z-Axis
-                    triRotatedZ = ZRotation(ZTheta, tri);
+                    triRotatedZ = mat4x4.ZRotation(ZTheta, tri);
 
                     //Rotate in X-Axis
-                    triRotatedX = XRotation(XTheta, triRotatedZ);
+                    triRotatedX = mat4x4.XRotation(XTheta, triRotatedZ);
 
                     //Rotate in Y-Axis
-                    triRotatedY = YRotation(YTheta, triRotatedX);
+                    triRotatedY = mat4x4.YRotation(YTheta, triRotatedX);
 
                     //Offset into the screen
-                    triTranslated = Zooming(d, triRotatedY);
+                    triTranslated = triRotatedY.Zooming(d);
 
                     Vector3f normal, line1, line2;
                     line1.X = triTranslated.v1.X - triTranslated.v0.X;

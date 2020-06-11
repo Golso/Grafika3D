@@ -13,13 +13,21 @@ namespace Grafika3D
         public Vector3f v2;
         public Color color;
 
-
         public Triangle(Vector3f v0, Vector3f v1, Vector3f v2, Color color)
         {
             this.v0 = v0;
             this.v1 = v1;
             this.v2 = v2;
             this.color = color;
+        }
+
+        public Triangle Zooming(float d)
+        {
+            v0.Z = v0.Z + d;
+            v1.Z = v1.Z + d;
+            v2.Z = v2.Z + d;
+
+            return this;
         }
     }
 }
