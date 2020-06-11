@@ -41,9 +41,23 @@ namespace Grafika3D
             return wynik;
         }
 
-        static void YRotation(float fTheta)
+        static Triangle YRotation(float fTheta, Triangle tri)
         {
+            mat4x4 matRotY = new mat4x4();
+            // Rotation Z
+            matRotY.m[0, 0] = (float)Math.Cos(fTheta);
+            matRotY.m[0, 2] = (float)(-Math.Sin(fTheta));
+            matRotY.m[2, 0] = (float)(Math.Sin(fTheta));
+            matRotY.m[1, 1] = 1;
+            matRotY.m[2, 2] = (float)Math.Cos(fTheta);
+            matRotY.m[3, 3] = 1;
 
+            Triangle wynik = tri;
+            wynik.v0 = mat4x4.MultiplyVecMatr(tri.v0, matRotY);
+            wynik.v1 = mat4x4.MultiplyVecMatr(tri.v1, matRotY);
+            wynik.v2 = mat4x4.MultiplyVecMatr(tri.v2, matRotY);
+
+            return wynik;
         }
 
         static Triangle ZRotation(float fTheta, Triangle tri)
@@ -61,6 +75,16 @@ namespace Grafika3D
             wynik.v0 = mat4x4.MultiplyVecMatr(tri.v0, matRotZ);
             wynik.v1 = mat4x4.MultiplyVecMatr(tri.v1, matRotZ);
             wynik.v2 = mat4x4.MultiplyVecMatr(tri.v2, matRotZ);
+
+            return wynik;
+        }
+
+        static Triangle Zooming(float d, Triangle tri)
+        {
+            Triangle wynik = tri;
+            wynik.v0.Z = wynik.v0.Z + d;
+            wynik.v1.Z = wynik.v1.Z + d;
+            wynik.v2.Z = wynik.v2.Z + d;
 
             return wynik;
         }
@@ -143,10 +167,7 @@ namespace Grafika3D
                 wynik[3] = new Vertex(new Vector2f(troj.v2.X, troj.v2.Y), Color.Black);
                 wynik[4] = new Vertex(new Vector2f(troj.v2.X, troj.v2.Y), Color.Black);
                 wynik[5] = new Vertex(new Vector2f(troj.v0.X, troj.v0.Y), Color.Black);
-                //Console.WriteLine(troj.v0.X + " " + troj.v0.Y);
-                //Console.WriteLine(troj.v1.X + " " + troj.v1.Y);
-                //Console.WriteLine(troj.v2.X + " " + troj.v2.Y);
-                //Console.WriteLine();
+
                 return wynik;
             }
 
@@ -173,31 +194,21 @@ namespace Grafika3D
                 // Clear screen
                 window.Clear();
 
-                //fTheta += 0.5f*(float)Math.PI*deltaTime.AsSeconds();
-
                 foreach (var tri in meshCube)
                 {
-                    Triangle triProjected, triTranslated, triRotatedZ, triRotatedX;
+                    Triangle triProjected, triTranslated, triRotatedZ, triRotatedX, triRotatedY;
 
                     //Rotate in Z-Axis
                     triRotatedZ = ZRotation(ZTheta, tri);
-                    //triRotatedZ = tri;
-                    //triRotatedZ.v0 = matProj.MultiplyVecMatr(triRotatedZ.v0, matRotZ);
-                    //triRotatedZ.v1 = matProj.MultiplyVecMatr(triRotatedZ.v1, matRotZ);
-                    //triRotatedZ.v2 = matProj.MultiplyVecMatr(triRotatedZ.v2, matRotZ);
 
                     //Rotate in X-Axis
                     triRotatedX = XRotation(XTheta, triRotatedZ);
-                    //triRotatedZX.v0 = matProj.MultiplyVecMatr(triRotatedZ.v0, matRotX);
-                    //triRotatedZX.v1 = matProj.MultiplyVecMatr(triRotatedZ.v1, matRotX);
-                    //triRotatedZX.v2 = matProj.MultiplyVecMatr(triRotatedZ.v2, matRotX);
-                    //triRotatedZX.color = tri.color;
+
+                    //Rotate in Y-Axis
+                    triRotatedY = YRotation(YTheta, triRotatedX);
 
                     //Offset into the screen
-                    triTranslated = triRotatedX;
-                    triTranslated.v0.Z = triRotatedX.v0.Z + d;
-                    triTranslated.v1.Z = triRotatedX.v1.Z + d;
-                    triTranslated.v2.Z = triRotatedX.v2.Z + d;
+                    triTranslated = Zooming(d, triRotatedY);
 
                     Vector3f normal, line1, line2;
                     line1.X = triTranslated.v1.X - triTranslated.v0.X;
@@ -269,10 +280,10 @@ namespace Grafika3D
                 {
                     //Moving
                     case Keyboard.Key.W:
-                        d+=0.1f;
+                        d+=0.05f;
                         break;
                     case Keyboard.Key.S:
-                        d-=0.1f;
+                        d-=0.05f;
                         break;
                     case Keyboard.Key.A:
                         ZTheta += 0.01f * (float)Math.PI;
@@ -285,6 +296,12 @@ namespace Grafika3D
                         break;
                     case Keyboard.Key.E:
                         XTheta -= 0.01f * (float)Math.PI;
+                        break;
+                    case Keyboard.Key.Z:
+                        YTheta += 0.01f * (float)Math.PI;
+                        break;
+                    case Keyboard.Key.C:
+                        YTheta -= 0.01f * (float)Math.PI;
                         break;
                     case Keyboard.Key.Escape:
                         window.Close();
@@ -306,6 +323,7 @@ namespace Grafika3D
                     d = 5.0f;
                     ZTheta = 0.0f;
                     XTheta = 0.0f;
+                    YTheta = 0.0f;
                     pressedKeys.Clear();
                     break;
                 case Keyboard.Key.F2:
