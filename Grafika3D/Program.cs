@@ -13,6 +13,10 @@ namespace Grafika3D
         public static uint Height = 800;
         public static RenderWindow window = new RenderWindow(new VideoMode(Width, Height), "Grafika3D");
         public static Time deltaTime;
+        static float zoom = 5.0f;
+        static float XTheta = 0;
+        static float YTheta = 0;
+        static float ZTheta = 0;
 
         static void OnClose(object sender, EventArgs e)
         {
@@ -20,11 +24,6 @@ namespace Grafika3D
             RenderWindow window = (RenderWindow)sender;
             window.Close();
         }
-
-        static float d = 5.0f;
-        static float XTheta = 0;
-        static float YTheta = 0;
-        static float ZTheta = 0;
 
         static void Main(string[] args)
         {
@@ -79,7 +78,6 @@ namespace Grafika3D
             float fAspectRatio = Width / Height;
             float fFovRad = 1.0f / (float)Math.Tan(fFov * 0.5f / 180.0f * 3.14159f);
             
-
             mat4x4 matProj = new mat4x4();
             matProj.Matrix_MakeProjection(fFov, fAspectRatio, fNear, fFar);
 
@@ -115,7 +113,7 @@ namespace Grafika3D
 
                 Keys();
 
-                Console.WriteLine(d);
+                Console.WriteLine(zoom);
 
                 // Clear screen
                 window.Clear();
@@ -134,55 +132,52 @@ namespace Grafika3D
                     triRotatedY = mat4x4.YRotation(YTheta, triRotatedX);
 
                     //Offset into the screen
-                    triTranslated = triRotatedY.Zooming(d);
+                    triTranslated = triRotatedY.Zooming(zoom);
 
                     Vector3f normal, line1, line2;
-                    line1.X = triTranslated.v1.X - triTranslated.v0.X;
-                    line1.Y = triTranslated.v1.Y - triTranslated.v0.Y;
-                    line1.Z = triTranslated.v1.Z - triTranslated.v0.Z;
 
-                    line2.X = triTranslated.v2.X - triTranslated.v0.X;
-                    line2.Y = triTranslated.v2.Y - triTranslated.v0.Y;
-                    line2.Z = triTranslated.v2.Z - triTranslated.v0.Z;
+                    line1 = triTranslated.v1 - triTranslated.v0;
+                    line2 = triTranslated.v2 - triTranslated.v0;
 
-                    normal.X = line1.Y * line2.Z - line1.Z * line2.Y;
-                    normal.Y = line1.Z * line2.X - line1.X * line2.Z;
-                    normal.Z = line1.X * line2.Y - line1.Y * line2.X;
+                    //Take cross product of lines to get normal to triangle surface
+                    normal = Croos(line1, line2);
 
-                    // It's normally normal to normalise the normal
-                    double l = Math.Sqrt(normal.X * normal.X + normal.Y * normal.Y + normal.Z * normal.Z);
-                    normal.X /= (float)l; normal.Y /= (float)l; normal.Z /= (float)l;
+                    normal = Vector_Normalise(normal);
 
-                    //if (normal.Z < 0)
-                    if(normal.X * (triTranslated.v0.X - vCamera.X) +
-                       normal.Y * (triTranslated.v0.Y - vCamera.Y) +
-                       normal.Z * (triTranslated.v0.Z - vCamera.Z) < 0.0)
+                    //Get Ray from triangle to camera
+                    Vector3f vCameraRay = triTranslated.v0 - vCamera;
+
+                    //if ray is aligned with normal, then triangle is visible
+                    if(Dot(normal, vCameraRay) < 0.0)
                     {
                         //Illumination
                         Vector3f light_direction = new Vector3f(0.0f, 0.0f, -1.0f);
-                        double i = Math.Sqrt(light_direction.X * light_direction.X + light_direction.Y * light_direction.Y + light_direction.Z * light_direction.Z);
-                        light_direction.X /= (float)i; light_direction.Y /= (float)i; light_direction.Z /= (float)i;
+                        light_direction = Vector_Normalise(light_direction);
 
                         // How similar is normal to light direction
-                        float dp = normal.X * light_direction.X + normal.Y * light_direction.Y + normal.Z * light_direction.Z;
+                        float dp = Math.Max(0.1f, Dot(light_direction, normal));
+
+                        //Here i should choose colors as required
 
                         //Project triangles from 3D -> 2D
-                        triProjected.v0 = mat4x4.MultiplyVecMatr(triTranslated.v0, matProj);
-                        triProjected.v1 = mat4x4.MultiplyVecMatr(triTranslated.v1, matProj);
-                        triProjected.v2 = mat4x4.MultiplyVecMatr(triTranslated.v2, matProj);
-                        triProjected.color = triTranslated.color; 
+                        triProjected.v0 = triTranslated.v0 * matProj;
+                        triProjected.v1 = triTranslated.v1 * matProj;
+                        triProjected.v2 = triTranslated.v2 * matProj;
+                        triProjected.color = triTranslated.color;
 
-                        triProjected.v0.X += 1f; triProjected.v0.Y += 1f;
-                        triProjected.v1.X += 1f; triProjected.v1.Y += 1f;
-                        triProjected.v2.X += 1f; triProjected.v2.Y += 1f;
-
+                        // Offset verts into visible normalised space
+                        Vector3f vOffsetView = new Vector3f(1.0f, 1.0f, 0);
+                        triProjected.v0 += vOffsetView;
+                        triProjected.v1 += vOffsetView;
+                        triProjected.v2 += vOffsetView;
+                        
                         triProjected.v0.X *= 0.5f * Width;
                         triProjected.v0.Y *= 0.5f * Height;
                         triProjected.v1.X *= 0.5f * Width;
                         triProjected.v1.Y *= 0.5f * Height;
                         triProjected.v2.X *= 0.5f * Width;
                         triProjected.v2.Y *= 0.5f * Height;
-
+                        
                         var trojk = wypelnionyTrojkat(triProjected);
                         var linie = trojkat(triProjected);
 
@@ -206,10 +201,10 @@ namespace Grafika3D
                 {
                     //Moving
                     case Keyboard.Key.W:
-                        d+=0.05f;
+                        zoom+=0.05f;
                         break;
                     case Keyboard.Key.S:
-                        d-=0.05f;
+                        zoom-=0.05f;
                         break;
                     case Keyboard.Key.A:
                         ZTheta += 0.01f * (float)Math.PI;
@@ -246,7 +241,7 @@ namespace Grafika3D
             switch (e.Code)
             {
                 case Keyboard.Key.Space:
-                    d = 5.0f;
+                    zoom = 5.0f;
                     ZTheta = 0.0f;
                     XTheta = 0.0f;
                     YTheta = 0.0f;
@@ -260,6 +255,34 @@ namespace Grafika3D
                     pressedKeys.Add(e.Code);
                     break;
             }
+        }
+
+        //Vector_CrossProduct
+        public static Vector3f Croos(Vector3f vec1, Vector3f vec2)
+        {
+            Vector3f v = new Vector3f();
+            v.X = vec1.Y * vec2.Z - vec1.Z * vec2.Y;
+            v.Y = vec1.Z * vec2.X - vec1.X * vec2.Z;
+            v.Z = vec1.X * vec2.Y - vec1.Y * vec2.X;
+            return v;
+        }
+
+        //Vector_DotProduct
+        public static float Dot(Vector3f vec1, Vector3f vec2)
+        {
+            return vec1.X * vec2.X + vec1.Y * vec2.Y + vec1.Z * vec2.Z;
+        }
+
+        public static double Vector_Length(Vector3f vec)
+        {
+            double l = Math.Sqrt(Dot(vec,vec));
+            return l;
+        }
+
+        public static Vector3f Vector_Normalise(Vector3f vec)
+        {
+            float l = (float)Vector_Length(vec);
+            return vec / l;
         }
     }
 }

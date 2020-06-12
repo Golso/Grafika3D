@@ -23,9 +23,9 @@ namespace Grafika3D
 
         public Triangle Zooming(float d)
         {
-            v0.Z = v0.Z + d;
-            v1.Z = v1.Z + d;
-            v2.Z = v2.Z + d;
+            v0.Z += d;
+            v1.Z += d;
+            v2.Z += d;
 
             return this;
         }
