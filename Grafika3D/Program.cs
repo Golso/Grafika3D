@@ -14,9 +14,9 @@ namespace Grafika3D
         public static RenderWindow window = new RenderWindow(new VideoMode(Width, Height), "Grafika3D");
         public static Time deltaTime;
         static float zoom = 5.0f;
-        static float XTheta = 0;
-        static float YTheta = 0;
-        static float ZTheta = 0;
+        static float XTheta = 0.1f * (float)Math.PI;
+        static float YTheta = 0.1f * (float)Math.PI;
+        static float ZTheta = 0.1f * (float)Math.PI;
 
         static void OnClose(object sender, EventArgs e)
         {
@@ -42,6 +42,8 @@ namespace Grafika3D
             Vector3f v05 = new Vector3f(1, 0, 1);
             Vector3f v06 = new Vector3f(1, 1, 0);
             Vector3f v07 = new Vector3f(1, 1, 1);
+
+            Vector3f v08 = new Vector3f(0.5f, 2, 0.5f);
 
             
             Mesh meshCube = new Mesh()
@@ -71,6 +73,31 @@ namespace Grafika3D
                 new Triangle( v05, v00, v04, Color.Yellow ),
             };
 
+            //ostrosłup
+            Mesh newObject3d = new Mesh()
+            {
+                // SOUTH
+                new Triangle( v00, v08, v04, Color.Blue ),
+
+		        // EAST                                                      
+		        new Triangle( v04, v08, v05, Color.Cyan ),
+
+		        // NORTH                                                     
+		        new Triangle( v05, v08, v01, Color.Green ),
+
+		        // WEST                                                      
+		        new Triangle( v01, v08, v00, Color.Magenta ),
+                                          
+		        // BOTTOM                                                    
+		        new Triangle( v05, v01, v00, Color.Yellow ),
+                new Triangle( v05, v00, v04, Color.Yellow ),
+            };
+
+            Mesh sphere = new Mesh();
+            sphere.LoadFromObjectFile("sphere.obj");
+
+            //meshCube.LoadFromObjectFile("sphere.obj");
+            
             // Projection Matrix
             float fNear = 0.1f;
             float fFar = 1000.0f;
@@ -113,12 +140,10 @@ namespace Grafika3D
 
                 Keys();
 
-                Console.WriteLine(zoom);
-
                 // Clear screen
                 window.Clear();
 
-                foreach (var tri in meshCube)
+                foreach (var tri in sphere)
                 {
                     Triangle triProjected, triTranslated, triRotatedZ, triRotatedX, triRotatedY;
 
@@ -148,7 +173,7 @@ namespace Grafika3D
                     Vector3f vCameraRay = triTranslated.v0 - vCamera;
 
                     //if ray is aligned with normal, then triangle is visible
-                    if(Dot(normal, vCameraRay) < 0.0)
+                    if (Dot(normal, vCameraRay) < 0.0)
                     {
                         //Illumination
                         Vector3f light_direction = new Vector3f(0.0f, 0.0f, -1.0f);
@@ -170,14 +195,14 @@ namespace Grafika3D
                         triProjected.v0 += vOffsetView;
                         triProjected.v1 += vOffsetView;
                         triProjected.v2 += vOffsetView;
-                        
+
                         triProjected.v0.X *= 0.5f * Width;
                         triProjected.v0.Y *= 0.5f * Height;
                         triProjected.v1.X *= 0.5f * Width;
                         triProjected.v1.Y *= 0.5f * Height;
                         triProjected.v2.X *= 0.5f * Width;
                         triProjected.v2.Y *= 0.5f * Height;
-                        
+
                         var trojk = wypelnionyTrojkat(triProjected);
                         var linie = trojkat(triProjected);
 
@@ -242,9 +267,9 @@ namespace Grafika3D
             {
                 case Keyboard.Key.Space:
                     zoom = 5.0f;
-                    ZTheta = 0.0f;
-                    XTheta = 0.0f;
-                    YTheta = 0.0f;
+                    ZTheta = 0.1f * (float)Math.PI;
+                    XTheta = 0.1f * (float)Math.PI;
+                    YTheta = 0.1f * (float)Math.PI;
                     pressedKeys.Clear();
                     break;
                 case Keyboard.Key.F2:
