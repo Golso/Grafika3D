@@ -42,7 +42,7 @@ namespace Grafika3D
                         if (line[0] == 'f')
                         {
                             string[] test = line.Split(' ');
-                            Triangles.Add(new Triangle(listawektorowa[Int32.Parse(test[1])-1], listawektorowa[Int32.Parse(test[2])-1], listawektorowa[Int32.Parse(test[3])-1],Color.Blue));
+                            Triangles.Add(new Triangle(listawektorowa[Int32.Parse(test[1])-1], listawektorowa[Int32.Parse(test[2])-1], listawektorowa[Int32.Parse(test[3])-1],new Color (0,0,255)));
                         }
                     }
                 }

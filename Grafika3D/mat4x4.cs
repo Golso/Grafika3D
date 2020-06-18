@@ -103,6 +103,7 @@ namespace Grafika3D
 
             return this;
         }
+
         /*
         public mat4x4 Matrix_MakeTranslation(float x, float y, float z)
         {

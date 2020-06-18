@@ -21,6 +21,18 @@ namespace Grafika3D
             this.color = color;
         }
 
+        public Triangle Slide(float x, float y)
+        {
+            v0.X += x;
+            v1.X += x;
+            v2.X += x;
+            v0.Y += y;
+            v1.Y += y;
+            v2.Y += y;
+
+            return this;
+        }
+
         public Triangle Zooming(float d)
         {
             v0.Z += d;
