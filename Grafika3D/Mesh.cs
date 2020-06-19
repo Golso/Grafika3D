@@ -8,9 +8,11 @@ using SFML.Graphics;
 
 namespace Grafika3D
 {
-    public class Mesh : IEnumerable<Triangle>
+    public class Mesh : IEnumerable<Triangle>, IComparable<Mesh>
     {
         public List<Triangle> Triangles { get; set; } = new List<Triangle>();
+
+        public float depth = 0;
 
         public void Add(Triangle t)
         {
@@ -62,6 +64,13 @@ namespace Grafika3D
         IEnumerator IEnumerable.GetEnumerator()
         {
             return ((IEnumerable<Triangle>)Triangles).GetEnumerator();
+        }
+
+        public int CompareTo(Mesh other)
+        {
+            if (this.depth > other.depth)
+                return -1;
+            else return 1;
         }
     }
 }

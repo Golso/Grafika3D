@@ -9,8 +9,8 @@ namespace Grafika3D
 {
     class Program
     {
-        public static uint Width = 800;
-        public static uint Height = 800;
+        public static uint Width = 1000;
+        public static uint Height = 1000;
         public static RenderWindow window = new RenderWindow(new VideoMode(Width, Height), "Grafika3D");
         public static Time deltaTime;
         static float zoom = 5.0f;
@@ -20,6 +20,7 @@ namespace Grafika3D
         static float YTheta = 0.1f * (float)Math.PI;
         static float ZTheta = 0.1f * (float)Math.PI;
         static Vector3f vCamera = new Vector3f(0, 0, 0);
+        static int siatka = 1;
 
         static void OnClose(object sender, EventArgs e)
         {
@@ -100,6 +101,10 @@ namespace Grafika3D
             Mesh sphere = new Mesh();
             sphere.LoadFromObjectFile("sphere.obj");
 
+            sphere.depth = 5.0f;
+            meshCube.depth = 7.0f;
+            newObject3d.depth = 10.0f;
+
             // Projection Matrix
             float fNear = 0.1f;
             float fFar = 1000.0f;
@@ -143,6 +148,12 @@ namespace Grafika3D
                 return wynik;
             }
 
+            List<Mesh> listameshy = new List<Mesh>();
+            listameshy.Add(meshCube);
+            listameshy.Add(sphere);
+            listameshy.Add(newObject3d);
+            listameshy.Sort();
+
             // Start the game loop
             while (window.IsOpen)
             {
@@ -154,83 +165,89 @@ namespace Grafika3D
                 // Clear screen
                 window.Clear();
 
-                foreach (var tri in sphere)
+                for (int i = 0; i < listameshy.Count; i++)
                 {
-                    Triangle triProjected, triTranslated, triRotatedZ, triRotatedX, triRotatedY, triViewed;
-
-                    //Rotate in Z-Axis
-                    triRotatedZ = mat4x4.ZRotation(ZTheta, tri);
-
-                    //Rotate in X-Axis
-                    triRotatedX = mat4x4.XRotation(XTheta, triRotatedZ);
-
-                    //Rotate in Y-Axis
-                    triRotatedY = mat4x4.YRotation(YTheta, triRotatedX);
-
-                    //Offset into the screen
-                    triTranslated = triRotatedY.Zooming(zoom);
-
-                    //triTranslated = triTranslated.Slide(x, y);
-
-                    Vector3f normal, line1, line2;
-
-                    line1 = triTranslated.v1 - triTranslated.v0;
-                    line2 = triTranslated.v2 - triTranslated.v0;
-
-                    //Take cross product of lines to get normal to triangle surface
-                    normal = Croos(line1, line2);
-
-                    normal = Vector_Normalise(normal);
-
-                    //Get Ray from triangle to camera
-                    Vector3f vCameraRay = triTranslated.v0 - vCamera;
-
-                    //if ray is aligned with normal, then triangle is visible
-                    if (Dot(normal, vCameraRay) < 0.0)
+                    foreach (var tri in listameshy[i])
                     {
-                        //Illumination
-                        Vector3f light_direction = new Vector3f(0.0f, 1.0f, -1.0f);
-                        light_direction = Vector_Normalise(light_direction);
+                        Triangle triProjected, triTranslated, triRotatedZ, triRotatedX, triRotatedY, triViewed;
 
-                        // How similar is normal to light direction
-                        float dp = Math.Max(0.1f, Dot(light_direction, normal));
+                        //Rotate in Z-Axis
+                        triRotatedZ = mat4x4.ZRotation(ZTheta, tri);
 
-                        //Here i should choose colors as required
-                        Color kolor = GetColor(dp);
-                        triTranslated.color = kolor;
+                        //Rotate in X-Axis
+                        triRotatedX = mat4x4.XRotation(XTheta, triRotatedZ);
 
-                        // Convert World Space --> View Space
-                        triViewed.v0 = triTranslated.v0 * matView;
-                        triViewed.v1 = triTranslated.v1 * matView;
-                        triViewed.v2 = triTranslated.v2 * matView;
-                        triViewed.color = triTranslated.color;
+                        //Rotate in Y-Axis
+                        triRotatedY = mat4x4.YRotation(YTheta, triRotatedX);
 
-                        //Project triangles from 3D -> 2D
-                        triProjected.v0 = triViewed.v0 * matProj;
-                        triProjected.v1 = triViewed.v1 * matProj;
-                        triProjected.v2 = triViewed.v2 * matProj;
-                        triProjected.color = triViewed.color;
+                        //Offset into the screen
+                        triTranslated = triRotatedY.Zooming(zoom + listameshy[i].depth);
 
-                        // Offset verts into visible normalised space
-                        Vector3f vOffsetView = new Vector3f(1.0f, 1.0f, 0);
-                        triProjected.v0 += vOffsetView;
-                        triProjected.v1 += vOffsetView;
-                        triProjected.v2 += vOffsetView;
+                        triTranslated = triTranslated.Slide(x, y);
 
-                        triProjected.v0.X *= 0.5f * Width;
-                        triProjected.v0.Y *= 0.5f * Height;
-                        triProjected.v1.X *= 0.5f * Width;
-                        triProjected.v1.Y *= 0.5f * Height;
-                        triProjected.v2.X *= 0.5f * Width;
-                        triProjected.v2.Y *= 0.5f * Height;
+                        Vector3f normal, line1, line2;
 
-                        var trojk = wypelnionyTrojkat(triProjected);
-                        var linie = trojkat(triProjected);
+                        line1 = triTranslated.v1 - triTranslated.v0;
+                        line2 = triTranslated.v2 - triTranslated.v0;
 
-                        window.Draw(trojk);
-                        //window.Draw(linie);
+                        //Take cross product of lines to get normal to triangle surface
+                        normal = Croos(line1, line2);
+
+                        normal = Vector_Normalise(normal);
+
+                        //Get Ray from triangle to camera
+                        Vector3f vCameraRay = triTranslated.v0 - vCamera;
+
+                        //if ray is aligned with normal, then triangle is visible
+                        if (Dot(normal, vCameraRay) < 0.0)
+                        {
+                            //Illumination
+                            Vector3f light_direction = new Vector3f(1.0f, 0.0f, -1.0f);
+                            light_direction = Vector_Normalise(light_direction);
+
+                            // How similar is normal to light direction
+                            float dp = Math.Max(0.1f, Dot(light_direction, normal));
+
+                            //Here i should choose colors as required
+                            Color kolor = GetColor(dp);
+                            triTranslated.color = kolor;
+
+                            // Convert World Space --> View Space
+                            triViewed.v0 = triTranslated.v0 * matView;
+                            triViewed.v1 = triTranslated.v1 * matView;
+                            triViewed.v2 = triTranslated.v2 * matView;
+                            triViewed.color = triTranslated.color;
+
+                            //Project triangles from 3D -> 2D
+                            triProjected.v0 = triTranslated.v0 * matProj;
+                            triProjected.v1 = triTranslated.v1 * matProj;
+                            triProjected.v2 = triTranslated.v2 * matProj;
+                            triProjected.color = triTranslated.color;
+
+                            // Offset verts into visible normalised space
+                            Vector3f vOffsetView = new Vector3f(1.0f, 1.0f, 0);
+                            triProjected.v0 += vOffsetView;
+                            triProjected.v1 += vOffsetView;
+                            triProjected.v2 += vOffsetView;
+
+                            triProjected.v0.X *= 0.5f * Width;
+                            triProjected.v0.Y *= 0.5f * Height;
+                            triProjected.v1.X *= 0.5f * Width;
+                            triProjected.v1.Y *= 0.5f * Height;
+                            triProjected.v2.X *= 0.5f * Width;
+                            triProjected.v2.Y *= 0.5f * Height;
+
+                            var trojk = wypelnionyTrojkat(triProjected);
+                            var linie = trojkat(triProjected);
+
+                            window.Draw(trojk);
+                            if (siatka == 1)
+                                window.Draw(linie);
+                        }
                     }
+
                 }
+
                 // Update the window
                 window.Display();
                 deltaTime = deltaClock.Restart();
@@ -271,20 +288,20 @@ namespace Grafika3D
                         YTheta -= 0.01f * (float)Math.PI;
                         break;
                     case Keyboard.Key.W:
-                        //y -= 0.01f;
-                        vCamera.Y += 1.0f;
+                        y -= 0.05f;
+                        //vCamera.Y += 1.0f;
                         break;
                     case Keyboard.Key.S:
-                        //y += 0.01f;
-                        vCamera.Y -= 1.0f;
+                        y += 0.05f;
+                        //vCamera.Y -= 1.0f;
                         break;
                     case Keyboard.Key.D:
-                        //x += 0.01f;
-                        vCamera.X += 1.0f;
+                        x += 0.05f;
+                        //vCamera.X += 1.0f;
                         break;
                     case Keyboard.Key.A:
-                        //x -= 0.01f;
-                        vCamera.X -= 1.0f;
+                        x -= 0.05f;
+                        //vCamera.X -= 1.0f;
                         break;
                     case Keyboard.Key.Escape:
                         window.Close();
@@ -303,15 +320,21 @@ namespace Grafika3D
             switch (e.Code)
             {
                 case Keyboard.Key.Space:
+                    pressedKeys.Clear();
+                    break;
+                case Keyboard.Key.Tab:
+                    if (siatka == 1)
+                        siatka = 0;
+                    else siatka = 1;
+                    break;
+                case Keyboard.Key.Tilde:
                     zoom = 5.0f;
+                    x = 0.0f;
+                    y = 0.0f;
                     ZTheta = 0.1f * (float)Math.PI;
                     XTheta = 0.1f * (float)Math.PI;
                     YTheta = 0.1f * (float)Math.PI;
                     pressedKeys.Clear();
-                    break;
-                case Keyboard.Key.F2:
-                    break;
-                case Keyboard.Key.F3:
                     break;
                 default:
                     pressedKeys.Add(e.Code);
@@ -424,6 +447,14 @@ namespace Grafika3D
             matrix.m[3,2] = -(m.m[3,0] * matrix.m[0,2] + m.m[3,1] * matrix.m[1,2] + m.m[3,2] * matrix.m[2,2]);
             matrix.m[3,3] = 1.0f;
             return matrix;
+        }
+
+        public static List<Mesh> sortowanko(List<Mesh> t)
+        {
+            List<Mesh> wynik = new List<Mesh>();
+
+
+            return wynik;
         }
     }
 }
