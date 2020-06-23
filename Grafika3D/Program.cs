@@ -49,52 +49,54 @@ namespace Grafika3D
 
             Vector3f v08 = new Vector3f(0.5f, 2, 0.5f);
 
+            Color blue = new Color(0, 0, 255);
+
             //sześcian
             Mesh meshCube = new Mesh()
             {
                 // SOUTH
-                new Triangle( v00, v02, v06, Color.Blue ),
-                new Triangle( v00, v06, v04, Color.Blue ),
+                new Triangle( v00, v02, v06, blue ),
+                new Triangle( v00, v06, v04, blue ),
 
 		        // EAST                                                      
-		        new Triangle( v04, v06, v07, Color.Blue ),
-                new Triangle( v04, v07, v05, Color.Blue ),
+		        new Triangle( v04, v06, v07, blue ),
+                new Triangle( v04, v07, v05, blue ),
 
 		        // NORTH                                                     
-		        new Triangle( v05, v07, v03, Color.Blue ),
-                new Triangle( v05, v03, v01, Color.Blue ),
+		        new Triangle( v05, v07, v03, blue ),
+                new Triangle( v05, v03, v01, blue ),
 
 		        // WEST                                                      
-		        new Triangle( v01, v03, v02, Color.Blue ),
-                new Triangle( v01, v02, v00, Color.Blue ),
+		        new Triangle( v01, v03, v02, blue ),
+                new Triangle( v01, v02, v00, blue ),
 
 		        // TOP                                                       
-		        new Triangle( v02, v03, v07, Color.Blue ),
-                new Triangle( v02, v07, v06, Color.Blue ),
+		        new Triangle( v02, v03, v07, blue ),
+                new Triangle( v02, v07, v06, blue ),
                                           
 		        // BOTTOM                                                    
-		        new Triangle( v05, v01, v00, Color.Blue ),
-                new Triangle( v05, v00, v04, Color.Blue ),
+		        new Triangle( v05, v01, v00, blue ),
+                new Triangle( v05, v00, v04, blue ),
             };
 
             //ostrosłup
             Mesh newObject3d = new Mesh()
             {
                 // SOUTH
-                new Triangle( v00, v08, v04, Color.Blue ),
+                new Triangle( v00, v08, v04, blue ),
 
 		        // EAST                                                      
-		        new Triangle( v04, v08, v05, Color.Blue ),
+		        new Triangle( v04, v08, v05, blue ),
 
 		        // NORTH                                                     
-		        new Triangle( v05, v08, v01, Color.Blue ),
+		        new Triangle( v05, v08, v01, blue ),
 
 		        // WEST                                                      
-		        new Triangle( v01, v08, v00, Color.Blue ),
+		        new Triangle( v01, v08, v00, blue ),
                                           
 		        // BOTTOM                                                    
-		        new Triangle( v05, v01, v00, Color.Blue ),
-                new Triangle( v05, v00, v04, Color.Blue ),
+		        new Triangle( v05, v01, v00, blue ),
+                new Triangle( v05, v00, v04, blue ),
             };
 
             //sfera
@@ -223,9 +225,9 @@ namespace Grafika3D
                         // How similar is normal to light direction
                         float dp = Math.Max(0.1f, Dot(light_direction, normal));
 
-                        //Here i should choose colors as required
-                        Color kolor = GetColor(dp);
-                        triTranslated.color = kolor;
+                        triTranslated.color.R = Convert.ToByte(triTranslated.color.R * dp);
+                        triTranslated.color.G = Convert.ToByte(triTranslated.color.G * dp);
+                        triTranslated.color.B = Convert.ToByte(triTranslated.color.B * dp);
 
                         // Convert World Space --> View Space
                         triViewed.v0 = triTranslated.v0 * matView;
