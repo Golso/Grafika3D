@@ -68,7 +68,7 @@ namespace Grafika3D
 
         public int CompareTo(Mesh other)
         {
-            if (this.depth > other.depth)
+            if (depth > other.depth)
                 return -1;
             else return 1;
         }

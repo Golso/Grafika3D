@@ -84,27 +84,47 @@ namespace Grafika3D
                 new Triangle( v00, v08, v04, Color.Blue ),
 
 		        // EAST                                                      
-		        new Triangle( v04, v08, v05, Color.Cyan ),
+		        new Triangle( v04, v08, v05, Color.Blue ),
 
 		        // NORTH                                                     
-		        new Triangle( v05, v08, v01, Color.Green ),
+		        new Triangle( v05, v08, v01, Color.Blue ),
 
 		        // WEST                                                      
-		        new Triangle( v01, v08, v00, Color.Magenta ),
+		        new Triangle( v01, v08, v00, Color.Blue ),
                                           
 		        // BOTTOM                                                    
-		        new Triangle( v05, v01, v00, Color.Yellow ),
-                new Triangle( v05, v00, v04, Color.Yellow ),
+		        new Triangle( v05, v01, v00, Color.Blue ),
+                new Triangle( v05, v00, v04, Color.Blue ),
             };
 
             //sfera
             Mesh sphere = new Mesh();
             sphere.LoadFromObjectFile("sphere.obj");
 
-            sphere.depth = 5.0f;
-            meshCube.depth = 7.0f;
-            newObject3d.depth = 10.0f;
+            List<Triangle> listaTrojkatow = new List<Triangle>();
 
+            //ustalenie głębokości figur
+            sphere.depth = 5.0f;
+            for (int i = 0; i < sphere.Triangles.Count; i++)
+            {
+                sphere.Triangles[i] = sphere.Triangles[i].Zooming(sphere.depth);
+                listaTrojkatow.Add(sphere.Triangles[i]);
+            }
+
+            meshCube.depth = 7.0f;
+            for (int i = 0; i < meshCube.Triangles.Count; i++)
+            {
+                meshCube.Triangles[i] = meshCube.Triangles[i].Zooming(meshCube.depth);
+                listaTrojkatow.Add(meshCube.Triangles[i]);
+            }
+
+            newObject3d.depth = 10.0f;
+            for (int i = 0; i < newObject3d.Triangles.Count; i++)
+            {
+                newObject3d.Triangles[i] = newObject3d.Triangles[i].Zooming(newObject3d.depth);
+                listaTrojkatow.Add(newObject3d.Triangles[i]);
+            }
+            
             // Projection Matrix
             float fNear = 0.1f;
             float fFar = 1000.0f;
@@ -148,11 +168,8 @@ namespace Grafika3D
                 return wynik;
             }
 
-            List<Mesh> listameshy = new List<Mesh>();
-            listameshy.Add(meshCube);
-            listameshy.Add(sphere);
-            listameshy.Add(newObject3d);
-            listameshy.Sort();
+
+            listaTrojkatow.Sort();
 
             // Start the game loop
             while (window.IsOpen)
@@ -165,87 +182,83 @@ namespace Grafika3D
                 // Clear screen
                 window.Clear();
 
-                for (int i = 0; i < listameshy.Count; i++)
+                foreach (var tri in listaTrojkatow)
                 {
-                    foreach (var tri in listameshy[i])
+                    Triangle triProjected, triTranslated, triRotatedZ, triRotatedX, triRotatedY, triViewed;
+
+                    //Rotate in Z-Axis
+                    triRotatedZ = mat4x4.ZRotation(ZTheta, tri);
+
+                    //Rotate in X-Axis
+                    triRotatedX = mat4x4.XRotation(XTheta, triRotatedZ);
+
+                    //Rotate in Y-Axis
+                    triRotatedY = mat4x4.YRotation(YTheta, triRotatedX);
+
+                    //Offset into the screen
+                    triTranslated = triRotatedY.Zooming(zoom);
+
+                    triTranslated = triTranslated.Slide(x, y);
+
+                    Vector3f normal, line1, line2;
+
+                    line1 = triTranslated.v1 - triTranslated.v0;
+                    line2 = triTranslated.v2 - triTranslated.v0;
+
+                    //Take cross product of lines to get normal to triangle surface
+                    normal = Croos(line1, line2);
+
+                    normal = Vector_Normalise(normal);
+
+                    //Get Ray from triangle to camera
+                    Vector3f vCameraRay = triTranslated.v0 - vCamera;
+
+                    //if ray is aligned with normal, then triangle is visible
+                    if (Dot(normal, vCameraRay) < 0.0)
                     {
-                        Triangle triProjected, triTranslated, triRotatedZ, triRotatedX, triRotatedY, triViewed;
+                        //Illumination
+                        Vector3f light_direction = new Vector3f(1.0f, 0.0f, -1.0f);
+                        light_direction = Vector_Normalise(light_direction);
 
-                        //Rotate in Z-Axis
-                        triRotatedZ = mat4x4.ZRotation(ZTheta, tri);
+                        // How similar is normal to light direction
+                        float dp = Math.Max(0.1f, Dot(light_direction, normal));
 
-                        //Rotate in X-Axis
-                        triRotatedX = mat4x4.XRotation(XTheta, triRotatedZ);
+                        //Here i should choose colors as required
+                        Color kolor = GetColor(dp);
+                        triTranslated.color = kolor;
 
-                        //Rotate in Y-Axis
-                        triRotatedY = mat4x4.YRotation(YTheta, triRotatedX);
+                        // Convert World Space --> View Space
+                        triViewed.v0 = triTranslated.v0 * matView;
+                        triViewed.v1 = triTranslated.v1 * matView;
+                        triViewed.v2 = triTranslated.v2 * matView;
+                        triViewed.color = triTranslated.color;
 
-                        //Offset into the screen
-                        triTranslated = triRotatedY.Zooming(zoom + listameshy[i].depth);
+                        //Project triangles from 3D -> 2D
+                        triProjected.v0 = triTranslated.v0 * matProj;
+                        triProjected.v1 = triTranslated.v1 * matProj;
+                        triProjected.v2 = triTranslated.v2 * matProj;
+                        triProjected.color = triTranslated.color;
 
-                        triTranslated = triTranslated.Slide(x, y);
+                        // Offset verts into visible normalised space
+                        Vector3f vOffsetView = new Vector3f(1.0f, 1.0f, 0);
+                        triProjected.v0 += vOffsetView;
+                        triProjected.v1 += vOffsetView;
+                        triProjected.v2 += vOffsetView;
 
-                        Vector3f normal, line1, line2;
+                        triProjected.v0.X *= 0.5f * Width;
+                        triProjected.v0.Y *= 0.5f * Height;
+                        triProjected.v1.X *= 0.5f * Width;
+                        triProjected.v1.Y *= 0.5f * Height;
+                        triProjected.v2.X *= 0.5f * Width;
+                        triProjected.v2.Y *= 0.5f * Height;
 
-                        line1 = triTranslated.v1 - triTranslated.v0;
-                        line2 = triTranslated.v2 - triTranslated.v0;
+                        var trojk = wypelnionyTrojkat(triProjected);
+                        var linie = trojkat(triProjected);
 
-                        //Take cross product of lines to get normal to triangle surface
-                        normal = Croos(line1, line2);
-
-                        normal = Vector_Normalise(normal);
-
-                        //Get Ray from triangle to camera
-                        Vector3f vCameraRay = triTranslated.v0 - vCamera;
-
-                        //if ray is aligned with normal, then triangle is visible
-                        if (Dot(normal, vCameraRay) < 0.0)
-                        {
-                            //Illumination
-                            Vector3f light_direction = new Vector3f(1.0f, 0.0f, -1.0f);
-                            light_direction = Vector_Normalise(light_direction);
-
-                            // How similar is normal to light direction
-                            float dp = Math.Max(0.1f, Dot(light_direction, normal));
-
-                            //Here i should choose colors as required
-                            Color kolor = GetColor(dp);
-                            triTranslated.color = kolor;
-
-                            // Convert World Space --> View Space
-                            triViewed.v0 = triTranslated.v0 * matView;
-                            triViewed.v1 = triTranslated.v1 * matView;
-                            triViewed.v2 = triTranslated.v2 * matView;
-                            triViewed.color = triTranslated.color;
-
-                            //Project triangles from 3D -> 2D
-                            triProjected.v0 = triTranslated.v0 * matProj;
-                            triProjected.v1 = triTranslated.v1 * matProj;
-                            triProjected.v2 = triTranslated.v2 * matProj;
-                            triProjected.color = triTranslated.color;
-
-                            // Offset verts into visible normalised space
-                            Vector3f vOffsetView = new Vector3f(1.0f, 1.0f, 0);
-                            triProjected.v0 += vOffsetView;
-                            triProjected.v1 += vOffsetView;
-                            triProjected.v2 += vOffsetView;
-
-                            triProjected.v0.X *= 0.5f * Width;
-                            triProjected.v0.Y *= 0.5f * Height;
-                            triProjected.v1.X *= 0.5f * Width;
-                            triProjected.v1.Y *= 0.5f * Height;
-                            triProjected.v2.X *= 0.5f * Width;
-                            triProjected.v2.Y *= 0.5f * Height;
-
-                            var trojk = wypelnionyTrojkat(triProjected);
-                            var linie = trojkat(triProjected);
-
-                            window.Draw(trojk);
-                            if (siatka == 1)
-                                window.Draw(linie);
-                        }
+                        window.Draw(trojk);
+                        if (siatka == 1)
+                            window.Draw(linie);
                     }
-
                 }
 
                 // Update the window
@@ -447,14 +460,6 @@ namespace Grafika3D
             matrix.m[3,2] = -(m.m[3,0] * matrix.m[0,2] + m.m[3,1] * matrix.m[1,2] + m.m[3,2] * matrix.m[2,2]);
             matrix.m[3,3] = 1.0f;
             return matrix;
-        }
-
-        public static List<Mesh> sortowanko(List<Mesh> t)
-        {
-            List<Mesh> wynik = new List<Mesh>();
-
-
-            return wynik;
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Grafika3D
 {
-    public struct Triangle
+    public struct Triangle :IComparable<Triangle>
     {
         public Vector3f v0;
         public Vector3f v1;
@@ -19,6 +19,15 @@ namespace Grafika3D
             this.v1 = v1;
             this.v2 = v2;
             this.color = color;
+        }
+
+        public int CompareTo(Triangle other)
+        {
+            float depth = (v0.Z + v1.Z + v2.Z) / 3;
+            float depthOfOther = (other.v0.Z + other.v1.Z + other.v2.Z) / 3;
+            if (depth > depthOfOther)
+                return -1;
+            else return 1;
         }
 
         public Triangle Slide(float x, float y)
