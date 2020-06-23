@@ -1,7 +1,5 @@
 ﻿using SFML.System;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Grafika3D
 {
@@ -103,20 +101,5 @@ namespace Grafika3D
 
             return this;
         }
-
-        /*
-        public mat4x4 Matrix_MakeTranslation(float x, float y, float z)
-        {
-            m[0,0] = 1.0f;
-            m[1,1] = 1.0f;
-            m[2,2] = 1.0f;
-            m[3,3] = 1.0f;
-            m[3,0] = x;
-            m[3,1] = y;
-            m[3,2] = z;
-
-            return this;
-        }
-        */
     }
 }

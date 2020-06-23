@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using SFML.System;
 using SFML.Graphics;
 
 namespace Grafika3D
 {
-    public class Mesh : IEnumerable<Triangle>, IComparable<Mesh>
+    public class Mesh : IEnumerable<Triangle>
     {
         public List<Triangle> Triangles { get; set; } = new List<Triangle>();
 
@@ -64,13 +63,6 @@ namespace Grafika3D
         IEnumerator IEnumerable.GetEnumerator()
         {
             return ((IEnumerable<Triangle>)Triangles).GetEnumerator();
-        }
-
-        public int CompareTo(Mesh other)
-        {
-            if (depth > other.depth)
-                return -1;
-            else return 1;
         }
     }
 }

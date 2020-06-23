@@ -2,7 +2,6 @@
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Grafika3D
@@ -137,15 +136,6 @@ namespace Grafika3D
             mat4x4 matProj = new mat4x4();
             matProj.Matrix_MakeProjection(fFov, fAspectRatio, fNear, fFar);
 
-            //camera Matrix
-            Vector3f vLookDir = new Vector3f(0, 0, 1);
-            Vector3f vUp = new Vector3f(0, 1, 0);
-            Vector3f vTarget = vCamera + vLookDir;
-
-            mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
-
-            mat4x4 matView = Matrix_QuickInverse(matCamera);
-
             //making triangle throught drawing lines
             VertexArray trojkat(Triangle troj)
             {
@@ -169,7 +159,6 @@ namespace Grafika3D
 
                 return wynik;
             }
-
 
             listaTrojkatow.Sort();
 
@@ -208,8 +197,7 @@ namespace Grafika3D
                     line2 = triTranslated.v2 - triTranslated.v0;
 
                     //Take cross product of lines to get normal to triangle surface
-                    normal = Croos(line1, line2);
-
+                    normal = Cross(line1, line2);
                     normal = Vector_Normalise(normal);
 
                     //Get Ray from triangle to camera
@@ -228,12 +216,6 @@ namespace Grafika3D
                         triTranslated.color.R = Convert.ToByte(triTranslated.color.R * dp);
                         triTranslated.color.G = Convert.ToByte(triTranslated.color.G * dp);
                         triTranslated.color.B = Convert.ToByte(triTranslated.color.B * dp);
-
-                        // Convert World Space --> View Space
-                        triViewed.v0 = triTranslated.v0 * matView;
-                        triViewed.v1 = triTranslated.v1 * matView;
-                        triViewed.v2 = triTranslated.v2 * matView;
-                        triViewed.color = triTranslated.color;
 
                         //Project triangles from 3D -> 2D
                         triProjected.v0 = triTranslated.v0 * matProj;
@@ -304,19 +286,15 @@ namespace Grafika3D
                         break;
                     case Keyboard.Key.W:
                         y -= 0.05f;
-                        //vCamera.Y += 1.0f;
                         break;
                     case Keyboard.Key.S:
                         y += 0.05f;
-                        //vCamera.Y -= 1.0f;
                         break;
                     case Keyboard.Key.D:
                         x += 0.05f;
-                        //vCamera.X += 1.0f;
                         break;
                     case Keyboard.Key.A:
                         x -= 0.05f;
-                        //vCamera.X -= 1.0f;
                         break;
                     case Keyboard.Key.Escape:
                         window.Close();
@@ -358,7 +336,7 @@ namespace Grafika3D
         }
 
         //Vector_CrossProduct
-        public static Vector3f Croos(Vector3f vec1, Vector3f vec2)
+        public static Vector3f Cross(Vector3f vec1, Vector3f vec2)
         {
             Vector3f v = new Vector3f();
             v.X = vec1.Y * vec2.Z - vec1.Z * vec2.Y;
@@ -383,85 +361,6 @@ namespace Grafika3D
         {
             float l = (float)Vector_Length(vec);
             return vec / l;
-        }
-
-        public static Color GetColor(float lum)
-        {
-            int pixel_bw = (int)(10.0f * lum);
-            Color kolor = new Color(0,0,0);
-            switch (pixel_bw)
-            {
-                case 0:
-                    kolor.B = 25;
-                    break;
-                case 1:
-                    kolor.B = 50;
-                    break;
-                case 2:
-                    kolor.B = 75;
-                    break;
-                case 3:
-                    kolor.B = 100;
-                    break;
-                case 4:
-                    kolor.B = 125;
-                    break;
-                case 5:
-                    kolor.B = 150;
-                    break;
-                case 6:
-                    kolor.B = 175;
-                    break;
-                case 7:
-                    kolor.B = 200;
-                    break;
-                case 8:
-                    kolor.B = 225;
-                    break;
-                case 9:
-                    kolor.B = 250;
-                    break;
-                default:
-                    kolor.B = 0;
-                    break;
-            }
-
-            return kolor;
-        }
-
-        public static mat4x4 Matrix_PointAt(Vector3f pos, Vector3f target, Vector3f up)
-        {
-            //calculate new forward direction
-            Vector3f newForward = target - pos;
-            newForward = Vector_Normalise(newForward);
-
-            // Calculate new Up direction
-            Vector3f a = newForward * Dot(up, newForward);
-            Vector3f newUp = up - a;
-            newUp = Vector_Normalise(newUp);
-
-            Vector3f newRight = Croos(newUp, newForward);
-
-            // Construct Dimensioning and Translation Matrix	
-            mat4x4 matrix = new mat4x4();
-            matrix.m[0,0] = newRight.X; matrix.m[0,1] = newRight.Y; matrix.m[0,2] = newRight.Z; matrix.m[0,3] = 0.0f;
-            matrix.m[1,0] = newUp.X; matrix.m[1,1] = newUp.Y; matrix.m[1,2] = newUp.Z; matrix.m[1,3] = 0.0f;
-            matrix.m[2,0] = newForward.X; matrix.m[2,1] = newForward.Y; matrix.m[2,2] = newForward.Z; matrix.m[2,3] = 0.0f;
-            matrix.m[3,0] = pos.X; matrix.m[3,1] = pos.Y; matrix.m[3,2] = pos.Z; matrix.m[3,3] = 1.0f;
-            return matrix;
-        }
-
-        public static mat4x4 Matrix_QuickInverse(mat4x4 m) // Only for Rotation/Translation Matrices
-        {
-            mat4x4 matrix = new mat4x4();
-            matrix.m[0,0] = m.m[0,0]; matrix.m[0,1] = m.m[1,0]; matrix.m[0,2] = m.m[2,0]; matrix.m[0,3] = 0.0f;
-            matrix.m[1,0] = m.m[0,1]; matrix.m[1,1] = m.m[1,1]; matrix.m[1,2] = m.m[2,1]; matrix.m[1,3] = 0.0f;
-            matrix.m[2,0] = m.m[0,2]; matrix.m[2,1] = m.m[1,2]; matrix.m[2,2] = m.m[2,2]; matrix.m[2,3] = 0.0f;
-            matrix.m[3,0] = -(m.m[3,0] * matrix.m[0,0] + m.m[3,1] * matrix.m[1,0] + m.m[3,2] * matrix.m[2,0]);
-            matrix.m[3,1] = -(m.m[3,0] * matrix.m[0,1] + m.m[3,1] * matrix.m[1,1] + m.m[3,2] * matrix.m[2,1]);
-            matrix.m[3,2] = -(m.m[3,0] * matrix.m[0,2] + m.m[3,1] * matrix.m[1,2] + m.m[3,2] * matrix.m[2,2]);
-            matrix.m[3,3] = 1.0f;
-            return matrix;
         }
     }
 }
