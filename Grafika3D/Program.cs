@@ -11,15 +11,15 @@ namespace Grafika3D
         public static uint Width = 1000;
         public static uint Height = 1000;
         public static RenderWindow window = new RenderWindow(new VideoMode(Width, Height), "Grafika3D");
-        public static Time deltaTime;
-        static float zoom = 5.0f;
-        static float x = 0.0f;
+        static float z = 5.0f;
+        static float x = -2.0f;
         static float y = 0.0f;
         static float XTheta = 0.1f * (float)Math.PI;
         static float YTheta = 0.1f * (float)Math.PI;
         static float ZTheta = 0.1f * (float)Math.PI;
         static Vector3f vCamera = new Vector3f(0, 0, 0);
-        static int siatka = 1;
+        static Vector3f light_direction = new Vector3f(1.0f, 0.0f, -1.0f);
+        static int net = 1;
 
         static void OnClose(object sender, EventArgs e)
         {
@@ -30,12 +30,9 @@ namespace Grafika3D
 
         static void Main(string[] args)
         {
-            Clock deltaClock = new Clock();
             window.Closed += new EventHandler(OnClose);
             window.KeyPressed += Window_KeyPressed;
             window.KeyReleased += Window_KeyReleased;
-            deltaTime = deltaClock.Restart();
-
 
             Vector3f v00 = new Vector3f(0, 0, 0);
             Vector3f v01 = new Vector3f(0, 0, 1);
@@ -45,122 +42,117 @@ namespace Grafika3D
             Vector3f v05 = new Vector3f(1, 0, 1);
             Vector3f v06 = new Vector3f(1, 1, 0);
             Vector3f v07 = new Vector3f(1, 1, 1);
-
-            Vector3f v08 = new Vector3f(0.5f, 2, 0.5f);
+           
+            Vector3f v08 = new Vector3f(0.5f, 2.5f, 0.5f);
 
             Color blue = new Color(0, 0, 255);
 
-            //sześcian
+            //Cube
             Mesh meshCube = new Mesh()
             {
-                // SOUTH
+                // SOUTH WALL
                 new Triangle( v00, v02, v06, blue ),
                 new Triangle( v00, v06, v04, blue ),
 
-		        // EAST                                                      
+		        // EAST WALL                                                      
 		        new Triangle( v04, v06, v07, blue ),
                 new Triangle( v04, v07, v05, blue ),
 
-		        // NORTH                                                     
+		        // NORTH WALL                                                    
 		        new Triangle( v05, v07, v03, blue ),
                 new Triangle( v05, v03, v01, blue ),
 
-		        // WEST                                                      
+		        // WEST WALL                                                     
 		        new Triangle( v01, v03, v02, blue ),
                 new Triangle( v01, v02, v00, blue ),
 
-		        // TOP                                                       
+		        // TOP WALL                                                       
 		        new Triangle( v02, v03, v07, blue ),
                 new Triangle( v02, v07, v06, blue ),
                                           
-		        // BOTTOM                                                    
+		        // BOTTOM WALL                                                   
 		        new Triangle( v05, v01, v00, blue ),
                 new Triangle( v05, v00, v04, blue ),
             };
 
-            //ostrosłup
-            Mesh newObject3d = new Mesh()
+            //pyramid
+            Mesh meshPyramid = new Mesh()
             {
-                // SOUTH
+                // SOUTH WALL
                 new Triangle( v00, v08, v04, blue ),
 
-		        // EAST                                                      
+		        // EAST WALL                                                     
 		        new Triangle( v04, v08, v05, blue ),
 
-		        // NORTH                                                     
+		        // NORTH WALL                                                    
 		        new Triangle( v05, v08, v01, blue ),
 
-		        // WEST                                                      
+		        // WEST WALL                                                     
 		        new Triangle( v01, v08, v00, blue ),
                                           
-		        // BOTTOM                                                    
+		        // BOTTOM WALL                                                   
 		        new Triangle( v05, v01, v00, blue ),
                 new Triangle( v05, v00, v04, blue ),
             };
 
-            //sfera
-            Mesh sphere = new Mesh();
-            sphere.LoadFromObjectFile("sphere.obj");
+            //Sphere
+            Mesh meshSphere = new Mesh();
+            meshSphere.LoadFromObjectFile("sphere.obj");
 
-            List<Triangle> listaTrojkatow = new List<Triangle>();
+            List<Triangle> triangleList = new List<Triangle>();
 
-            //ustalenie głębokości figur
-            sphere.depth = 5.0f;
-            for (int i = 0; i < sphere.Triangles.Count; i++)
+            //Determining the depth and location of figures
+            meshSphere.depth = 7.0f;
+            for (int i = 0; i < meshSphere.Triangles.Count; i++)
             {
-                sphere.Triangles[i] = sphere.Triangles[i].Zooming(sphere.depth);
-                listaTrojkatow.Add(sphere.Triangles[i]);
+                meshSphere.Triangles[i] = meshSphere.Triangles[i].SlideAndZoom(0, 0, meshSphere.depth);
+                triangleList.Add(meshSphere.Triangles[i]);
             }
 
-            meshCube.depth = 7.0f;
+            meshCube.depth = 4.0f;
             for (int i = 0; i < meshCube.Triangles.Count; i++)
             {
-                meshCube.Triangles[i] = meshCube.Triangles[i].Zooming(meshCube.depth);
-                listaTrojkatow.Add(meshCube.Triangles[i]);
+                meshCube.Triangles[i] = meshCube.Triangles[i].SlideAndZoom(0, 0, meshCube.depth);
+                triangleList.Add(meshCube.Triangles[i]);
             }
 
-            newObject3d.depth = 10.0f;
-            for (int i = 0; i < newObject3d.Triangles.Count; i++)
+            meshPyramid.depth = 10.0f;
+            for (int i = 0; i < meshPyramid.Triangles.Count; i++)
             {
-                newObject3d.Triangles[i] = newObject3d.Triangles[i].Zooming(newObject3d.depth);
-                listaTrojkatow.Add(newObject3d.Triangles[i]);
+                meshPyramid.Triangles[i] = meshPyramid.Triangles[i].SlideAndZoom(0, 0, meshPyramid.depth);
+                triangleList.Add(meshPyramid.Triangles[i]);
             }
             
             // Projection Matrix
-            float fNear = 0.1f;
-            float fFar = 1000.0f;
-            float fFov = 90.0f;
-            float fAspectRatio = Width / Height;
-            float fFovRad = 1.0f / (float)Math.Tan(fFov * 0.5f / 180.0f * 3.14159f);
-            
-            mat4x4 matProj = new mat4x4();
-            matProj.Matrix_MakeProjection(fFov, fAspectRatio, fNear, fFar);
+            Matrix4x4 projMatrix = new Matrix4x4();
+            projMatrix.Matrix_MakeProjection(90.0f, Height / Width, 0.5f, 1200.0f);
 
-            //making triangle throught drawing lines
-            VertexArray trojkat(Triangle troj)
+            //Making triangle throught drawing lines
+            VertexArray drawTriangleNet(Triangle tri)
             {
-                VertexArray wynik = new VertexArray(PrimitiveType.Lines, 6);
-                wynik[0] = new Vertex(new Vector2f(troj.v0.X, troj.v0.Y), Color.White);
-                wynik[1] = new Vertex(new Vector2f(troj.v1.X, troj.v1.Y), Color.White);
-                wynik[2] = new Vertex(new Vector2f(troj.v1.X, troj.v1.Y), Color.White);
-                wynik[3] = new Vertex(new Vector2f(troj.v2.X, troj.v2.Y), Color.White);
-                wynik[4] = new Vertex(new Vector2f(troj.v2.X, troj.v2.Y), Color.White);
-                wynik[5] = new Vertex(new Vector2f(troj.v0.X, troj.v0.Y), Color.White);
+                VertexArray result = new VertexArray(PrimitiveType.Lines, 6);
+                result[0] = new Vertex(new Vector2f(tri.v0.X, tri.v0.Y), Color.White);
+                result[1] = new Vertex(new Vector2f(tri.v1.X, tri.v1.Y), Color.White);
+                result[2] = new Vertex(new Vector2f(tri.v1.X, tri.v1.Y), Color.White);
+                result[3] = new Vertex(new Vector2f(tri.v2.X, tri.v2.Y), Color.White);
+                result[4] = new Vertex(new Vector2f(tri.v2.X, tri.v2.Y), Color.White);
+                result[5] = new Vertex(new Vector2f(tri.v0.X, tri.v0.Y), Color.White);
 
-                return wynik;
+                return result;
             }
 
-            VertexArray wypelnionyTrojkat(Triangle troj)
+            VertexArray drawFilledTriangle(Triangle tri)
             {
-                VertexArray wynik = new VertexArray(PrimitiveType.Triangles, 3);
-                wynik[0] = new Vertex(new Vector2f(troj.v0.X, troj.v0.Y), troj.color);
-                wynik[1] = new Vertex(new Vector2f(troj.v1.X, troj.v1.Y), troj.color);
-                wynik[2] = new Vertex(new Vector2f(troj.v2.X, troj.v2.Y), troj.color);
+                VertexArray result = new VertexArray(PrimitiveType.Triangles, 3);
+                result[0] = new Vertex(new Vector2f(tri.v0.X, tri.v0.Y), tri.color);
+                result[1] = new Vertex(new Vector2f(tri.v1.X, tri.v1.Y), tri.color);
+                result[2] = new Vertex(new Vector2f(tri.v2.X, tri.v2.Y), tri.color);
 
-                return wynik;
+                return result;
             }
 
-            listaTrojkatow.Sort();
+            //Sorting triangles for Painter's algorithm
+            triangleList.Sort();
 
             // Start the game loop
             while (window.IsOpen)
@@ -173,58 +165,56 @@ namespace Grafika3D
                 // Clear screen
                 window.Clear();
 
-                foreach (var tri in listaTrojkatow)
+                foreach (var tri in triangleList)
                 {
-                    Triangle triProjected, triTranslated, triRotatedZ, triRotatedX, triRotatedY, triViewed;
+                    Triangle triProjected, triConverted, triRotatedZ, triRotatedX, triRotatedY, triMoved;
+
+                    //Move in scene
+                    triMoved = Matrix4x4.Move(x, y, z, tri);
 
                     //Rotate in Z-Axis
-                    triRotatedZ = mat4x4.ZRotation(ZTheta, tri);
+                    triRotatedZ = Matrix4x4.ZRotation(ZTheta, triMoved);
 
                     //Rotate in X-Axis
-                    triRotatedX = mat4x4.XRotation(XTheta, triRotatedZ);
+                    triRotatedX = Matrix4x4.XRotation(XTheta, triRotatedZ);
 
                     //Rotate in Y-Axis
-                    triRotatedY = mat4x4.YRotation(YTheta, triRotatedX);
+                    triRotatedY = Matrix4x4.YRotation(YTheta, triRotatedX);
 
-                    //Offset into the screen
-                    triTranslated = triRotatedY.Zooming(zoom);
-
-                    triTranslated = triTranslated.Slide(x, y);
+                    triConverted = triRotatedY;
 
                     Vector3f normal, line1, line2;
 
-                    line1 = triTranslated.v1 - triTranslated.v0;
-                    line2 = triTranslated.v2 - triTranslated.v0;
+                    line1 = triConverted.v1 - triConverted.v0;
+                    line2 = triConverted.v2 - triConverted.v0;
 
                     //Take cross product of lines to get normal to triangle surface
                     normal = Cross(line1, line2);
                     normal = Vector_Normalise(normal);
 
                     //Get Ray from triangle to camera
-                    Vector3f vCameraRay = triTranslated.v0 - vCamera;
+                    Vector3f vCameraRay = triConverted.v0 - vCamera;
 
-                    //if ray is aligned with normal, then triangle is visible
+                    //If ray is aligned with normal, then triangle is visible thanks to that we aren't drawing triangles which we wouldn't see
                     if (Dot(normal, vCameraRay) < 0.0)
                     {
                         //Illumination
-                        Vector3f light_direction = new Vector3f(1.0f, 0.0f, -1.0f);
                         light_direction = Vector_Normalise(light_direction);
 
                         // How similar is normal to light direction
                         float dp = Math.Max(0.1f, Dot(light_direction, normal));
 
-                        triTranslated.color.R = Convert.ToByte(triTranslated.color.R * dp);
-                        triTranslated.color.G = Convert.ToByte(triTranslated.color.G * dp);
-                        triTranslated.color.B = Convert.ToByte(triTranslated.color.B * dp);
+                        triConverted.color.R = Convert.ToByte(triConverted.color.R * dp);
+                        triConverted.color.G = Convert.ToByte(triConverted.color.G * dp);
+                        triConverted.color.B = Convert.ToByte(triConverted.color.B * dp);
 
                         //Project triangles from 3D -> 2D
-                        triProjected.v0 = triTranslated.v0 * matProj;
-                        triProjected.v1 = triTranslated.v1 * matProj;
-                        triProjected.v2 = triTranslated.v2 * matProj;
-                        triProjected.color = triTranslated.color;
+                        triProjected.v0 = triConverted.v0 * projMatrix;
+                        triProjected.v1 = triConverted.v1 * projMatrix;
+                        triProjected.v2 = triConverted.v2 * projMatrix;
+                        triProjected.color = triConverted.color;
 
-                        // Offset verts into visible normalised space
-                        Vector3f vOffsetView = new Vector3f(1.0f, 1.0f, 0);
+                        Vector3f vOffsetView = new Vector3f(1.0f, 1.0f, 0.0f);
                         triProjected.v0 += vOffsetView;
                         triProjected.v1 += vOffsetView;
                         triProjected.v2 += vOffsetView;
@@ -236,18 +226,20 @@ namespace Grafika3D
                         triProjected.v2.X *= 0.5f * Width;
                         triProjected.v2.Y *= 0.5f * Height;
 
-                        var trojk = wypelnionyTrojkat(triProjected);
-                        var linie = trojkat(triProjected);
+                        var drawnTriangle = drawFilledTriangle(triProjected);
+                        var lines = drawTriangleNet(triProjected);
 
-                        window.Draw(trojk);
-                        if (siatka == 1)
-                            window.Draw(linie);
+                        //Checking if triangle is not behind camera
+                        if(triProjected.v0.Z < 0.999 || triProjected.v1.Z < 0.999 || triProjected.v2.Z < 0.999)
+                        {
+                            window.Draw(drawnTriangle);
+                            if (net == 0)
+                                window.Draw(lines);
+                        }
                     }
                 }
-
                 // Update the window
                 window.Display();
-                deltaTime = deltaClock.Restart();
             }
         }
 
@@ -261,10 +253,10 @@ namespace Grafika3D
                 {
                     //Moving
                     case Keyboard.Key.E:
-                        zoom+=0.05f;
+                        z+=0.05f;
                         break;
                     case Keyboard.Key.Q:
-                        zoom-=0.05f;
+                        z-=0.05f;
                         break;
                     case Keyboard.Key.U:
                         ZTheta += 0.01f * (float)Math.PI;
@@ -316,13 +308,13 @@ namespace Grafika3D
                     pressedKeys.Clear();
                     break;
                 case Keyboard.Key.Tab:
-                    if (siatka == 1)
-                        siatka = 0;
-                    else siatka = 1;
+                    if (net == 1)
+                        net = 0;
+                    else net = 1;
                     break;
                 case Keyboard.Key.Tilde:
-                    zoom = 5.0f;
-                    x = 0.0f;
+                    z = 5.0f;
+                    x = -2.0f;
                     y = 0.0f;
                     ZTheta = 0.1f * (float)Math.PI;
                     XTheta = 0.1f * (float)Math.PI;
@@ -338,10 +330,12 @@ namespace Grafika3D
         //Vector_CrossProduct
         public static Vector3f Cross(Vector3f vec1, Vector3f vec2)
         {
-            Vector3f v = new Vector3f();
-            v.X = vec1.Y * vec2.Z - vec1.Z * vec2.Y;
-            v.Y = vec1.Z * vec2.X - vec1.X * vec2.Z;
-            v.Z = vec1.X * vec2.Y - vec1.Y * vec2.X;
+            Vector3f v = new Vector3f
+            {
+                X = vec1.Y * vec2.Z - vec1.Z * vec2.Y,
+                Y = vec1.Z * vec2.X - vec1.X * vec2.Z,
+                Z = vec1.X * vec2.Y - vec1.Y * vec2.X
+            };
             return v;
         }
 

@@ -28,23 +28,19 @@ namespace Grafika3D
             else return 1;
         }
 
-        public Triangle Slide(float x, float y)
+        public Triangle SlideAndZoom(float x, float y, float z)
         {
             v0.X += x;
             v1.X += x;
             v2.X += x;
+
             v0.Y += y;
             v1.Y += y;
             v2.Y += y;
 
-            return this;
-        }
-
-        public Triangle Zooming(float d)
-        {
-            v0.Z += d;
-            v1.Z += d;
-            v2.Z += d;
+            v0.Z += z;
+            v1.Z += z;
+            v2.Z += z;
 
             return this;
         }

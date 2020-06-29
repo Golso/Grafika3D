@@ -33,10 +33,12 @@ namespace Grafika3D
                         if (line[0] == 'v')
                         {
                             string[] test = line.Split(' ');
-                            Vector3f v = new Vector3f();
-                            v.X = float.Parse(test[1], System.Globalization.CultureInfo.InvariantCulture);
-                            v.Y = float.Parse(test[2], System.Globalization.CultureInfo.InvariantCulture);
-                            v.Z = float.Parse(test[3], System.Globalization.CultureInfo.InvariantCulture);
+                            Vector3f v = new Vector3f
+                            {
+                                X = float.Parse(test[1], System.Globalization.CultureInfo.InvariantCulture),
+                                Y = float.Parse(test[2], System.Globalization.CultureInfo.InvariantCulture),
+                                Z = float.Parse(test[3], System.Globalization.CultureInfo.InvariantCulture)
+                            };
                             listawektorowa.Add(v);
                         }
 
